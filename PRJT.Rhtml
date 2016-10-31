@@ -1,0 +1,177 @@
+<html>
+
+<head>
+<title> Practical Machine Learning Project </title>
+</head>
+
+<body>
+
+<p> Background: 
+ "Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively.  These type of devices are part of the quantified self-movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways."<p>
+
+<p> Goal:
+The goal of this project is to predict the manner in which the 6 participants performed the exercise. That is, we try to predict the "classe" variable in the training set. <p>
+
+<p>Models and Method:
+In order to predict the "classe"" variables, we trained the following four models:
+
+* Artificial Neural Network (ANN)
+* Support Vector Machine (SVM)
+* Generalized Boosted Regression (GBR)
+* Random Forest (RF)
+
+The given training data set had 19622 rows with 160 variables and the test data set had 20 rows with 160 variables. In order to clean this data set, we removed the columns with too many missing values. After cleaning the data set, we noted that the first seven columns were not useful for predicting the "classe" variable. Therefore, we removed these columns.
+
+
+Since the test data set did not contain the response variable ("classe") we partitioned the given data set into new training (75%) and validation (25%) sets repectively. The new training set was then used to train the aforementioned models and then tested on the validation data set.  Here we used cross validation as the control method. These models were trained on one of the randomly selected data sets and tested on the remaining four.  In order to reduce variability, 5 rounds of cross-validation were performed using different partitions, and the validation results were averaged over the rounds. That is, for each such split, the model(s) was fit to the training data, and predictive accuracy is assessed using the validation data. The results were then averaged over the splits. <p>
+
+
+
+
+<!--begin.rcode
+
+## set working directory
+setwd("/Users/ernestjum/Documents/practical_mach_learning")
+
+############################################################
+###########################################################
+## Needed packages: install if not already installed
+
+# install.packages("caret", dependencies = c("Depends", "Suggests"))
+# install.packages("kernlab", dependencies = c("Depends", "Suggests"))
+# install.packages("ISLR", dependencies = c("Depends", "Suggests"))
+# install.packages("neuralnet", dependencies = c("Depends", "Suggests"))
+# install.packages("ggplot2", dependencies = c("Depends", "Suggests"))
+# install.packages("ksvm", dependencies = c("Depends", "Suggests"))
+end.rcode-->
+
+
+<!--begin.rcode
+summary(cars)
+end.rcode-->
+
+<!--begin.rcode
+############################################################
+###########################################################
+## load packages
+library(caret)
+library(kernlab)
+library(ISLR)
+library(ggplot2)
+library(Hmisc)
+library(ggplot2)
+library(neuralnet)
+end.rcode-->
+
+<!--begin.rcode
+############################################################
+############################################################
+## random seed for replication of results
+set.seed(123456)
+
+############################################################
+############################################################
+# The data for this project comes from the following source: 
+# http://groupware.les.inf.puc-rio.br/har.
+
+## read in training and test data sets 
+train<-read.csv("pml-training.csv", stringsAsFactors = FALSE,na.strings = c("NA", ""))
+test<-read.csv("pml-testing.csv", stringsAsFactors = FALSE, na.strings = c("NA", ""))
+
+############################################################
+############################################################
+## explore training set
+
+# str(train)
+# dim(train)
+# summary(train)
+end.rcode-->
+
+
+<p> Clean data set for modeling:
+
+A summary of the training data set indicates that there are some columns with too many  missing values. These variables will not be useful in our analysis thus we ommit them.<p>
+
+
+<!--begin.rcode
+############################################################
+############################################################
+## Delete columns with too many missing values
+train1 <- train[, colSums(is.na(train)) == 0]
+test1 <- test[, colSums(is.na(test)) == 0]
+end.rcode-->
+
+<p>The first seven columns cannot be used for predictions so we omit them<p>
+
+
+<!--begin.rcode
+############################################################
+############################################################
+## ommit first seven columns
+train2 <- train1[, -c(1:7)]
+test_final <- test1[, -c(1:7)]
+
+end.rcode-->
+
+
+<p>Data Partitioning:
+We split the cleaned data set into training (75%) and validation (25%) set, which are then used to train the different model.<p>
+
+<!--begin.rcode
+
+############################################################
+############################################################
+# Partition data set into training and validation--75% to 25% 
+inTrain <- createDataPartition(train2$classe, p = 0.75, list = FALSE)
+train_final <- train2[inTrain, ]
+validation <- train2[-inTrain, ]
+end.rcode-->
+
+
+<p>Control Method is Cross Validation<p>
+
+<!--begin.rcode
+############################################################
+############################################################
+## cross validation--number of samples equals 5
+ctrl <- trainControl(method = "cv", number = 5, savePred=T, classProb=T)
+
+end.rcode-->
+
+
+<p>Random Forest<p>
+<!--begin.rcode
+############################################################
+###########################################################
+model_rf <- train(classe ~ ., data = train_final, method = "rf", 
+                                                    trControl = ctrl)
+end.rcode-->
+
+<p><b>RFSummary Statistics, Accuracy and Prediction<b><p>
+
+<!--begin.rcode
+print(model_rf, digits = 4)
+  pred_rf <- predict(model_rf, validation)
+  (conf_mat_rf <- confusionMatrix(validation$classe, pred_rf))
+  (acc_rf <- conf_mat_rf$overall[1])
+  
+## output prediction on test data set
+  (pred_test_rf<-predict(model_rf, test_final))
+
+end.rcode-->
+
+<p>Conclusion<p>
+Based on the accuracy from the validation data set, the random generalized boosted regression and the  random forest have the best performance. But the random forest has a better over all accuracy, thus we use it for predicting the "classe" variable. The random forest has an accuracy of 
+
+<!--begin.rcode 
+  acc_r 
+end.rcode--> 
+  
+with the following predictions on the test set: 
+
+<!--begin.rcode 
+  pred_test_rf 
+end.rcode-->
+
+</body>
+</html>
